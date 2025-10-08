@@ -206,14 +206,20 @@ export function updateRiggedFish(fish, dt = 1/60) {
       ud.jumpTimer += 0.07 * (dt * 60);
       if (ud.jumpTimer > ud.jumpCooldown) {
         ud.inAir = true; ud.jumpTimer = 0; ud.jumpCooldown = 1.1 + Math.random()*2.0;
-        ud.velocity.y = 0.28 + Math.random()*0.18; // Increased jump height
+        ud.velocity.y = 0.35 + Math.random() * 0.12; // Increased jump height
+        ud.velocity.z *= 1.2; // Give it a little forward boost for the jump arc
         // Add less horizontal velocity from jump itself, as side-to-side is main driver
         ud.velocity.x += (Math.random()<0.5?-1:1) * (0.01 + Math.random()*0.02);
       }
     } else {
       ud.velocity.y += -0.018 * (dt * 60);
       const scaledVelY = ud.velocity.y * (dt * 60);
-      if (fish.position.y <= ud.baseY && scaledVelY <= 0) { fish.position.y = ud.baseY; ud.velocity.y = 0; ud.inAir = false; }
+      if (fish.position.y <= ud.baseY && scaledVelY <= 0) { 
+          fish.position.y = ud.baseY; 
+          ud.velocity.y = 0; 
+          ud.velocity.z = ud.velocity.z / 1.2; // Return to normal swim speed
+          ud.inAir = false; 
+      }
     }
   } else {
     let weave = 0;
@@ -233,7 +239,10 @@ export function updateRiggedFish(fish, dt = 1/60) {
   ud.prevX = fish.position.x;
   fish.rotation.y = ud.baseRotY + Math.sin(ud.swimTimer * ud.swimFrequency) * 0.08;
   if (ud.pattern === 'jumper' && ud.inAir) {
-    fish.rotation.x = THREE.MathUtils.lerp(fish.rotation.x, -0.35 * Math.sign(ud.velocity.y), 0.2);
+    fish.rotation.x = THREE.MathUtils.lerp(fish.rotation.x, -0.45 * Math.sign(ud.velocity.y), 0.15);
+  } else if (!ud.inAir) {
+    // Smoothly return to neutral pitch when back in water
+    fish.rotation.x = THREE.MathUtils.lerp(fish.rotation.x, 0, 0.1);
   }
   fish.rotation.z = THREE.MathUtils.clamp(-dx * 0.6, -0.28, 0.28);
 
